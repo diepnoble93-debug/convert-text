@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Công cụ chuyển đổi Full-width sang Half-width</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background-color: #f4f4f9; }
+        textarea { width: 100%; height: 100px; margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box;}
+        button { padding: 10px 20px; cursor: pointer; background-color: #28a745; color: white; border: none; border-radius: 5px; font-size: 16px; }
+        button:hover { background-color: #218838; }
+        .output-container { position: relative; }
+        #status { margin-left: 10px; color: #666; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+    <h2>Chuyển đổi Tiếng Nhật (Full -> Half)</h2>
+    
+    <p>Dán text Full-width vào đây:</p>
+    <textarea id="inputText" placeholder="Ví dụ: １２３　ＡＢＣ　アイウエオ"></textarea>
+
+    <div style="text-align: center; margin: 20px 0;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M7 11l5 5 5-5M12 4v12" />
+        </svg>
+    </div>
+
+    <p>Kết quả (Half-width):</p>
+    <div class="output-container">
+        <textarea id="outputText" readonly placeholder="Kết quả sẽ hiện ở đây..."></textarea>
+    </div>
+
+    <button onclick="copyToClipboard()">Sao chép kết quả</button>
+    <span id="status"></span>
+
+    <script>
+        const input = document.getElementById('inputText');
+        const output = document.getElementById('outputText');
+        const status = document.getElementById('status');
+
+        // Hàm tự động chuyển đổi khi nhập liệu
+        input.addEventListener('input', function() {
+            const original = input.value;
+            // 'NFKC' là chuẩn Unicode giúp chuyển các ký tự full-width về dạng chuẩn (tương đương half-width/ASCII)
+            const converted = original.normalize('NFKC');
+            output.value = converted;
+            status.textContent = ""; // Xóa thông báo đã copy khi nhập mới
+        });
+
+        // Hàm copy
+        function copyToClipboard() {
+            if (!output.value) return;
+            
+            output.select();
+            output.setSelectionRange(0, 99999); // Cho mobile
+            
+            navigator.clipboard.writeText(output.value).then(() => {
+                status.textContent = "Đã copy vào bộ nhớ tạm!";
+                status.style.color = "green";
+            }).catch(err => {
+                status.textContent = "Lỗi copy!";
+                status.style.color = "red";
+            });
+        }
+    </script>
+</body>
+</html>
