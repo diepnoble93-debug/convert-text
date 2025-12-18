@@ -3,63 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Công cụ chuyển đổi Full-width sang Half-width</title>
+    <title>Tool Chuyển đổi Excel ASC (Full -> Half)</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background-color: #f4f4f9; }
-        textarea { width: 100%; height: 100px; margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box;}
-        button { padding: 10px 20px; cursor: pointer; background-color: #28a745; color: white; border: none; border-radius: 5px; font-size: 16px; }
-        button:hover { background-color: #218838; }
-        .output-container { position: relative; }
-        #status { margin-left: 10px; color: #666; font-size: 0.9em; }
+        body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; padding: 30px; max-width: 700px; margin: 0 auto; background-color: #f0f2f5; }
+        h2 { color: #333; text-align: center; }
+        .container { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        label { font-weight: bold; display: block; margin-bottom: 8px; color: #555; }
+        textarea { width: 100%; height: 120px; margin-bottom: 15px; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; resize: vertical; }
+        textarea:focus { border-color: #007bff; outline: none; }
+        
+        .btn-group { text-align: right; }
+        button { padding: 10px 24px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: 600; transition: background 0.2s; }
+        button:hover { background-color: #0056b3; }
+        button.secondary { background-color: #6c757d; margin-right: 10px; }
+        button.secondary:hover { background-color: #5a6268; }
+
+        #status { display: inline-block; margin-right: 15px; font-size: 0.9em; font-weight: 500; }
+        .arrow-icon { text-align: center; margin: 10px 0; color: #aaa; }
     </style>
 </head>
 <body>
 
-    <h2>Chuyển đổi Tiếng Nhật (Full -> Half)</h2>
-    
-    <p>Dán text Full-width vào đây:</p>
-    <textarea id="inputText" placeholder="Ví dụ: １２３　ＡＢＣ　アイウエオ"></textarea>
+    <div class="container">
+        <h2>Chuyển đổi Full-width sang Half-width</h2>
+        <p style="text-align: center; color: #666; font-size: 0.9em;">(Hoạt động giống hệt hàm =ASC trong Excel)</p>
+        
+        <label for="inputText">Nhập text Tiếng Nhật / Full-width:</label>
+        <textarea id="inputText" placeholder="Ví dụ: １２３　ＡＢＣ　アイウエオ　ガギグゲゴ"></textarea>
 
-    <div style="text-align: center; margin: 20px 0;">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M7 11l5 5 5-5M12 4v12" />
-        </svg>
-    </div>
+        <div class="arrow-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+        </div>
 
-    <p>Kết quả (Half-width):</p>
-    <div class="output-container">
+        <label for="outputText">Kết quả (Đã convert):</label>
         <textarea id="outputText" readonly placeholder="Kết quả sẽ hiện ở đây..."></textarea>
-    </div>
 
-    <button onclick="copyToClipboard()">Sao chép kết quả</button>
-    <span id="status"></span>
+        <div class="btn-group">
+            <span id="status"></span>
+            <button class="secondary" onclick="clearText()">Xóa</button>
+            <button onclick="copyToClipboard()">Sao chép kết quả</button>
+        </div>
+    </div>
 
     <script>
+        // Bảng map Katakana Full-width sang Half-width
+        const katakanaMap = {
+            '。': '｡', '、': '､', '「': '｢', '」': '｣', '・': '･',
+            'ァ': 'ｧ', 'ア': 'ｱ', 'ィ': 'ｨ', 'イ': 'ｲ', 'ゥ': 'ｩ', 'ウ': 'ｳ', 'ェ': 'ｪ', 'エ': 'ｴ', 'ォ': 'ｫ', 'オ': 'ｵ',
+            'カ': 'ｶ', 'ガ': 'ｶﾞ', 'キ': 'ｷ', 'ギ': 'ｷﾞ', 'ク': 'ｸ', 'グ': 'ｸﾞ', 'ケ': 'ｹ', 'ゲ': 'ｹﾞ', 'コ': 'ｺ', 'ゴ': 'ｺﾞ',
+            'サ': 'ｻ', 'ザ': 'ｻﾞ', 'シ': 'ｼ', 'ジ': 'ｼﾞ', 'ス': 'ｽ', 'ズ': 'ｽﾞ', 'セ': 'ｾ', 'ゼ': 'ｾﾞ', 'ソ': 'ｿ', 'ゾ': 'ｿﾞ',
+            'タ': 'ﾀ', 'ダ': 'ﾀﾞ', 'チ': 'ﾁ', 'ヂ': 'ﾁﾞ', 'ッ': 'ｯ', 'ツ': 'ﾂ', 'ヅ': 'ﾂﾞ', 'テ': 'ﾃ', 'デ': 'ﾃﾞ', 'ト': 'ﾄ', 'ド': 'ﾄﾞ',
+            'ナ': 'ﾅ', 'ニ': 'ﾆ', 'ヌ': 'ﾇ', 'ネ': 'ﾈ', 'ノ': 'ﾉ',
+            'ハ': 'ﾊ', 'バ': 'ﾊﾞ', 'パ': 'ﾊﾟ', 'ヒ': 'ﾋ', 'ビ': 'ﾋﾞ', 'ピ': 'ﾋﾟ', 'フ': 'ﾌ', 'ブ': 'ﾌﾞ', 'プ': 'ﾌﾟ', 'ヘ': 'ﾍ', 'ベ': 'ﾍﾞ', 'ペ': 'ﾍﾟ', 'ホ': 'ﾎ', 'ボ': 'ﾎﾞ', 'ポ': 'ﾎﾟ',
+            'マ': 'ﾏ', 'ミ': 'ﾐ', 'ム': 'ﾑ', 'メ': 'ﾒ', 'モ': 'ﾓ',
+            'ヤ': 'ﾔ', 'ユ': 'ﾕ', 'ヨ': 'ﾖ', 'ャ': 'ｬ', 'ュ': 'ｭ', 'ョ': 'ｮ',
+            'ラ': 'ﾗ', 'リ': 'ﾘ', 'ル': 'ﾙ', 'レ': 'ﾚ', 'ロ': 'ﾛ',
+            'ワ': 'ﾜ', 'ヲ': 'ｦ', 'ン': 'ﾝ',
+            'ヴ': 'ｳﾞ', 'ヵ': 'ｶ', 'ヶ': 'ｹ', // Các ký tự đặc biệt
+            'ー': 'ｰ', '゛': 'ﾞ', '゜': 'ﾟ',
+            '　': ' ' // Space full-width
+        };
+
         const input = document.getElementById('inputText');
         const output = document.getElementById('outputText');
         const status = document.getElementById('status');
 
-        // Hàm tự động chuyển đổi khi nhập liệu
+        function toHalfWidth(str) {
+            return str
+                // 1. Chuyển đổi Katakana dựa trên bảng map
+                .replace(/[。-゜]/g, function(m) {
+                    return katakanaMap[m] || m;
+                })
+                .replace(/　/g, ' ') // Xử lý dấu cách đặc biệt
+                // 2. Chuyển đổi Số và Chữ cái (AlphaNumeric)
+                // Từ FF01 (!) đến FF5E (~) chuyển về 0021 (!) đến 007E (~)
+                // Phép toán: Mã Unicode - 65248
+                .replace(/[！-～]/g, function(c) {
+                    return String.fromCharCode(c.charCodeAt(0) - 0xFEE0);
+                });
+        }
+
         input.addEventListener('input', function() {
-            const original = input.value;
-            // 'NFKC' là chuẩn Unicode giúp chuyển các ký tự full-width về dạng chuẩn (tương đương half-width/ASCII)
-            const converted = original.normalize('NFKC');
-            output.value = converted;
-            status.textContent = ""; // Xóa thông báo đã copy khi nhập mới
+            output.value = toHalfWidth(input.value);
+            status.textContent = "";
         });
 
-        // Hàm copy
+        function clearText() {
+            input.value = "";
+            output.value = "";
+            input.focus();
+            status.textContent = "";
+        }
+
         function copyToClipboard() {
             if (!output.value) return;
-            
             output.select();
-            output.setSelectionRange(0, 99999); // Cho mobile
-            
+            output.setSelectionRange(0, 99999);
             navigator.clipboard.writeText(output.value).then(() => {
-                status.textContent = "Đã copy vào bộ nhớ tạm!";
-                status.style.color = "green";
+                status.textContent = "Đã copy thành công! ✅";
+                status.style.color = "#28a745";
+                setTimeout(() => status.textContent = "", 2000);
             }).catch(err => {
-                status.textContent = "Lỗi copy!";
+                status.textContent = "Lỗi khi copy!";
                 status.style.color = "red";
             });
         }
