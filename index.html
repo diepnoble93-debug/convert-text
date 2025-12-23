@@ -112,39 +112,37 @@
         }
 
         input.addEventListener('input', function() {
-            // Lấy kết quả đã convert
-            const result = toHalfWidth(input.value);
-            output.value = result;
-            status.textContent = "";
+    // Lấy kết quả đã convert
+    const result = toHalfWidth(input.value);
+    output.value = result;
+    status.textContent = "";
 
-            // [MỚI 3] Kiểm tra 2 dấu cách liên tiếp
-            // Vì hàm toHalfWidth đã đổi dấu cách to thành nhỏ và trim đầu đuôi
-            // Nên nếu còn 2 dấu cách liền nhau thì chắc chắn nó nằm ở giữa.
-            if (result.includes("  ")) {
-                warningMsg.textContent = "⚠️ Cẩn thận! Đang có 2 dấu cách đứng cạnh nhau!";
-                warningMsg.style.display = "block";
-            } else {
-                warningMsg.textContent = "";
-                warningMsg.style.display = "none";
-            }
-            // Cảnh báo dùng 'ｰ' sai (giữa chữ/số)
-    if (/[A-Za-z0-9]ｰ|ｰ[A-Za-z0-9]/.test(result)) {
-        warnings.push("⚠️ Phát hiện 'ｰ' đang dùng như dấu nối (có thể dùng sai ngữ nghĩa)");
+    let warnings = [];
+
+    // [CŨ] Cảnh báo 2 dấu cách liên tiếp
+    if (result.includes("  ")) {
+        warnings.push("⚠️ Cẩn thận! Đang có 2 dấu cách đứng cạnh nhau!");
     }
 
-    // Cảnh báo Katakana + dấu '-'
+    // [MỚI] Cảnh báo dùng 'ｰ' như dấu nối (giữa chữ/số)
+    if (/[A-Za-z0-9]ｰ|ｰ[A-Za-z0-9]/.test(result)) {
+        warnings.push("⚠️ Phát hiện 'ｰ' đang được dùng như dấu nối (có thể sai ngữ nghĩa)");
+    }
+
+    // [MỚI] Cảnh báo Katakana nối bằng dấu '-' ASCII
     if (/[ｦ-ﾟ]-|-[ｦ-ﾟ]/.test(result)) {
         warnings.push("⚠️ Katakana đang nối bằng '-' (có thể thiếu 'ー' hoặc dùng sai dấu)");
     }
 
+    // Hiển thị cảnh báo
     if (warnings.length > 0) {
         warningMsg.innerHTML = warnings.join("<br>");
         warningMsg.style.display = "block";
     } else {
         warningMsg.textContent = "";
-        warningMsg.style.display = "none";}
-        });
-
+        warningMsg.style.display = "none";
+    }
+});
         function clearText() {
             input.value = "";
             output.value = "";
