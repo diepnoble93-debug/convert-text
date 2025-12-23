@@ -94,7 +94,7 @@
         function toHalfWidth(str) {
             return str
                 // 1. Katakana full-width → half-width
-                .replace(/[ァ-ヺ・ー゛゜]/g, ch => katakanaMap[ch] || ch)
+                .replace(/[、。ァ-ヺ・ー゛゜]/g, ch => katakanaMap[ch] || ch)
 
                 // 2. Full-width space (khoảng trắng to) -> khoảng trắng thường
                 .replace(/　/g, ' ')
