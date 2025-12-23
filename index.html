@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tool Chuyển đổi Excel ASC (Full -> Half)</title>
+    <title>Tool Chuyển đổi Excel ASC (Nâng cao)</title>
     <style>
         body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; padding: 30px; max-width: 700px; margin: 0 auto; background-color: #f0f2f5; }
         h2 { color: #333; text-align: center; }
         .container { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         label { font-weight: bold; display: block; margin-bottom: 8px; color: #555; }
-        textarea { width: 100%; height: 120px; margin-bottom: 15px; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; resize: vertical; }
+        textarea { width: 100%; height: 120px; margin-bottom: 5px; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; resize: vertical; }
         textarea:focus { border-color: #007bff; outline: none; }
         
-        .btn-group { text-align: right; }
+        .btn-group { text-align: right; margin-top: 15px; }
         button { padding: 10px 24px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: 600; transition: background 0.2s; }
         button:hover { background-color: #0056b3; }
         button.secondary { background-color: #6c757d; margin-right: 10px; }
@@ -20,16 +20,26 @@
 
         #status { display: inline-block; margin-right: 15px; font-size: 0.9em; font-weight: 500; }
         .arrow-icon { text-align: center; margin: 10px 0; color: #aaa; }
+        
+        /* CSS cho tin nhắn cảnh báo */
+        #warning-msg {
+            color: #dc3545; /* Màu đỏ */
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-top: 5px;
+            min-height: 20px; /* Giữ chỗ để không bị giật giao diện */
+            display: none; /* Mặc định ẩn */
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h2>Chuyển đổi Full-width sang Half-width</h2>
-        <p style="text-align: center; color: #666; font-size: 0.9em;">(Hoạt động giống hệt hàm =ASC trong Excel)</p>
+        <p style="text-align: center; color: #666; font-size: 0.9em;">(Auto Trim + Cảnh báo 2 dấu cách + Convert dấu phẩy)</p>
         
         <label for="inputText">Nhập text Tiếng Nhật / Full-width:</label>
-        <textarea id="inputText" placeholder="Ví dụ: １２３　ＡＢＣ　アイウエオ　ガギグゲゴ"></textarea>
+        <textarea id="inputText" placeholder="Ví dụ: １２３ , ＡＢＣ　　アイウエオ"></textarea>
 
         <div class="arrow-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
@@ -37,6 +47,8 @@
 
         <label for="outputText">Kết quả (Đã convert):</label>
         <textarea id="outputText" readonly placeholder="Kết quả sẽ hiện ở đây..."></textarea>
+        
+        <div id="warning-msg"></div>
 
         <div class="btn-group">
             <span id="status"></span>
@@ -46,55 +58,75 @@
     </div>
 
     <script>
-const katakanaMap = {
-    '。': '｡', '、': '､', '「': '｢', '」': '｣', '・': '･',
-    'ァ': 'ｧ', 'ア': 'ｱ', 'ィ': 'ｨ', 'イ': 'ｲ', 'ゥ': 'ｩ', 'ウ': 'ｳ',
-    'ェ': 'ｪ', 'エ': 'ｴ', 'ォ': 'ｫ', 'オ': 'ｵ',
-    'カ': 'ｶ', 'ガ': 'ｶﾞ', 'キ': 'ｷ', 'ギ': 'ｷﾞ', 'ク': 'ｸ', 'グ': 'ｸﾞ',
-    'ケ': 'ｹ', 'ゲ': 'ｹﾞ', 'コ': 'ｺ', 'ゴ': 'ｺﾞ',
-    'サ': 'ｻ', 'ザ': 'ｻﾞ', 'シ': 'ｼ', 'ジ': 'ｼﾞ',
-    'ス': 'ｽ', 'ズ': 'ｽﾞ', 'セ': 'ｾ', 'ゼ': 'ｾﾞ',
-    'ソ': 'ｿ', 'ゾ': 'ｿﾞ',
-    'タ': 'ﾀ', 'ダ': 'ﾀﾞ', 'チ': 'ﾁ', 'ヂ': 'ﾁﾞ',
-    'ッ': 'ｯ', 'ツ': 'ﾂ', 'ヅ': 'ﾂﾞ',
-    'テ': 'ﾃ', 'デ': 'ﾃﾞ', 'ト': 'ﾄ', 'ド': 'ﾄﾞ',
-    'ナ': 'ﾅ', 'ニ': 'ﾆ', 'ヌ': 'ﾇ', 'ネ': 'ﾈ', 'ノ': 'ﾉ',
-    'ハ': 'ﾊ', 'バ': 'ﾊﾞ', 'パ': 'ﾊﾟ',
-    'ヒ': 'ﾋ', 'ビ': 'ﾋﾞ', 'ピ': 'ﾋﾟ',
-    'フ': 'ﾌ', 'ブ': 'ﾌﾞ', 'プ': 'ﾌﾟ',
-    'ヘ': 'ﾍ', 'ベ': 'ﾍﾞ', 'ペ': 'ﾍﾟ',
-    'ホ': 'ﾎ', 'ボ': 'ﾎﾞ', 'ポ': 'ﾎﾟ',
-    'マ': 'ﾏ', 'ミ': 'ﾐ', 'ム': 'ﾑ', 'メ': 'ﾒ', 'モ': 'ﾓ',
-    'ヤ': 'ﾔ', 'ユ': 'ﾕ', 'ヨ': 'ﾖ',
-    'ャ': 'ｬ', 'ュ': 'ｭ', 'ョ': 'ｮ',
-    'ラ': 'ﾗ', 'リ': 'ﾘ', 'ル': 'ﾙ', 'レ': 'ﾚ', 'ロ': 'ﾛ',
-    'ワ': 'ﾜ', 'ヲ': 'ｦ', 'ン': 'ﾝ',
-    'ヴ': 'ｳﾞ', 'ヵ': 'ｶ', 'ヶ': 'ｹ',
-    'ー': 'ｰ', '゛': 'ﾞ', '゜': 'ﾟ',
-    '　': ' '
-};
+        const katakanaMap = {
+            '。': '｡', '、': '､', '「': '｢', '」': '｣', '・': '･',
+            'ァ': 'ｧ', 'ア': 'ｱ', 'ィ': 'ｨ', 'イ': 'ｲ', 'ゥ': 'ｩ', 'ウ': 'ｳ',
+            'ェ': 'ｪ', 'エ': 'ｴ', 'ォ': 'ｫ', 'オ': 'ｵ',
+            'カ': 'ｶ', 'ガ': 'ｶﾞ', 'キ': 'ｷ', 'ギ': 'ｷﾞ', 'ク': 'ｸ', 'グ': 'ｸﾞ',
+            'ケ': 'ｹ', 'ゲ': 'ｹﾞ', 'コ': 'ｺ', 'ゴ': 'ｺﾞ',
+            'サ': 'ｻ', 'ザ': 'ｻﾞ', 'シ': 'ｼ', 'ジ': 'ｼﾞ',
+            'ス': 'ｽ', 'ズ': 'ｽﾞ', 'セ': 'ｾ', 'ゼ': 'ｾﾞ',
+            'ソ': 'ｿ', 'ゾ': 'ｿﾞ',
+            'タ': 'ﾀ', 'ダ': 'ﾀﾞ', 'チ': 'ﾁ', 'ヂ': 'ﾁﾞ',
+            'ッ': 'ｯ', 'ツ': 'ﾂ', 'ヅ': 'ﾂﾞ',
+            'テ': 'ﾃ', 'デ': 'ﾃﾞ', 'ト': 'ﾄ', 'ド': 'ﾄﾞ',
+            'ナ': 'ﾅ', 'ニ': 'ﾆ', 'ヌ': 'ﾇ', 'ネ': 'ﾈ', 'ノ': 'ﾉ',
+            'ハ': 'ﾊ', 'バ': 'ﾊﾞ', 'パ': 'ﾊﾟ',
+            'ヒ': 'ﾋ', 'ビ': 'ﾋﾞ', 'ピ': 'ﾋﾟ',
+            'フ': 'ﾌ', 'ブ': 'ﾌﾞ', 'プ': 'ﾌﾟ',
+            'ヘ': 'ﾍ', 'ベ': 'ﾍﾞ', 'ペ': 'ﾍﾟ',
+            'ホ': 'ﾎ', 'ボ': 'ﾎﾞ', 'ポ': 'ﾎﾟ',
+            'マ': 'ﾏ', 'ミ': 'ﾐ', 'ム': 'ﾑ', 'メ': 'ﾒ', 'モ': 'ﾓ',
+            'ヤ': 'ﾔ', 'ユ': 'ﾕ', 'ヨ': 'ﾖ',
+            'ャ': 'ｬ', 'ュ': 'ｭ', 'ョ': 'ｮ',
+            'ラ': 'ﾗ', 'リ': 'ﾘ', 'ル': 'ﾙ', 'レ': 'ﾚ', 'ロ': 'ﾛ',
+            'ワ': 'ﾜ', 'ヲ': 'ｦ', 'ン': 'ﾝ',
+            'ヴ': 'ｳﾞ', 'ヵ': 'ｶ', 'ヶ': 'ｹ',
+            'ー': 'ｰ', '゛': 'ﾞ', '゜': 'ﾟ',
+            '　': ' '
+        };
 
         const input = document.getElementById('inputText');
         const output = document.getElementById('outputText');
         const status = document.getElementById('status');
+        const warningMsg = document.getElementById('warning-msg'); // Lấy thẻ div cảnh báo
 
         function toHalfWidth(str) {
-    return str
-        // 1. Katakana full-width → half-width
-        .replace(/[ァ-ヺ・ー゛゜]/g, ch => katakanaMap[ch] || ch)
+            return str
+                // 1. Katakana full-width → half-width
+                .replace(/[ァ-ヺ・ー゛゜]/g, ch => katakanaMap[ch] || ch)
 
-        // 2. Full-width space
-        .replace(/　/g, ' ')
+                // 2. Full-width space (khoảng trắng to) -> khoảng trắng thường
+                .replace(/　/g, ' ')
 
-        // 3. Full-width ASCII (!～)
-        .replace(/[！-～]/g, ch =>
-            String.fromCharCode(ch.charCodeAt(0) - 0xFEE0)
-        );
-}
+                // 3. Full-width ASCII (!～) -> Half-width
+                .replace(/[！-～]/g, ch =>
+                    String.fromCharCode(ch.charCodeAt(0) - 0xFEE0)
+                )
+
+                // [MỚI 1] Thay dấu phẩy tiếng Anh "," thành dấu phẩy Nhật half-width "､"
+                .replace(/,/g, '､')
+
+                // [MỚI 2] Xóa khoảng trắng ở đầu và cuối chuỗi (Trim)
+                .trim();
+        }
 
         input.addEventListener('input', function() {
-            output.value = toHalfWidth(input.value);
+            // Lấy kết quả đã convert
+            const result = toHalfWidth(input.value);
+            output.value = result;
             status.textContent = "";
+
+            // [MỚI 3] Kiểm tra 2 dấu cách liên tiếp
+            // Vì hàm toHalfWidth đã đổi dấu cách to thành nhỏ và trim đầu đuôi
+            // Nên nếu còn 2 dấu cách liền nhau thì chắc chắn nó nằm ở giữa.
+            if (result.includes("  ")) {
+                warningMsg.textContent = "⚠️ Cẩn thận! Đang có 2 dấu cách đứng cạnh nhau!";
+                warningMsg.style.display = "block";
+            } else {
+                warningMsg.textContent = "";
+                warningMsg.style.display = "none";
+            }
         });
 
         function clearText() {
@@ -102,6 +134,10 @@ const katakanaMap = {
             output.value = "";
             input.focus();
             status.textContent = "";
+            
+            // Xóa luôn cảnh báo khi clear
+            warningMsg.textContent = "";
+            warningMsg.style.display = "none";
         }
 
         function copyToClipboard() {
