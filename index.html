@@ -118,28 +118,22 @@
 
     let warnings = [];
 
-    // RULE 1: 2 space liên tiếp
+    // RULE A: 2 dấu cách liên tiếp
     if (result.includes("  ")) {
         warnings.push("⚠️ [FORMAT] Có 2 dấu cách liên tiếp");
     }
 
-    // RULE 2: 'ｰ' dùng sai (cấm trong mã kỹ thuật)
+    // RULE B: 'ｰ' dùng sai (cấm trong mã kỹ thuật)
     if (/[A-Za-z0-9]ｰ|ｰ[A-Za-z0-9]/.test(result)) {
         warnings.push("🚫 [DRAWING] 'ｰ' không được dùng làm dấu nối trong mã kỹ thuật");
     }
 
-    // RULE 3: ASCII '-' dùng trong tiếng Nhật
+    // RULE C: ASCII '-' dùng trong text tiếng Nhật
     if (/[ｦ-ﾟ一-龯]-|-[ｦ-ﾟ一-龯]/.test(result)) {
         warnings.push("🚫 [DRAWING] Dùng '-' ASCII trong text tiếng Nhật");
     }
-    });
 
-    // RULE 5: Katakana có thể thiếu 'ー'
-    if (/[ｱｲｳｴｵｶｻﾀﾅﾊﾏﾔﾗﾜ](?![ｰー])/.test(result)) {
-        warnings.push("⚠️ [JP] Katakana có thể đang thiếu dấu kéo dài 'ー'");
-    }
-
-    // Hiển thị
+    // Hiển thị cảnh báo
     if (warnings.length > 0) {
         warningMsg.innerHTML = warnings.join("<br>");
         warningMsg.style.display = "block";
