@@ -111,30 +111,52 @@
                 .trim();
         }
 
-        input.addEventListener('input', function() {
-    // Lấy kết quả đã convert
+        input.addEventListener('input', function () {
     const result = toHalfWidth(input.value);
     output.value = result;
     status.textContent = "";
 
     let warnings = [];
 
-    // [CŨ] Cảnh báo 2 dấu cách liên tiếp
+    // RULE 1: 2 space liên tiếp
     if (result.includes("  ")) {
-        warnings.push("⚠️ Cẩn thận! Đang có 2 dấu cách đứng cạnh nhau!");
+        warnings.push("⚠️ [FORMAT] Có 2 dấu cách liên tiếp");
     }
 
-    // [MỚI] Cảnh báo dùng 'ｰ' như dấu nối (giữa chữ/số)
+    // RULE 2: 'ｰ' dùng sai (cấm trong mã kỹ thuật)
     if (/[A-Za-z0-9]ｰ|ｰ[A-Za-z0-9]/.test(result)) {
-        warnings.push("⚠️ Phát hiện 'ｰ' đang được dùng như dấu nối (có thể sai ngữ nghĩa)");
+        warnings.push("🚫 [DRAWING] 'ｰ' không được dùng làm dấu nối trong mã kỹ thuật");
     }
 
-    // [MỚI] Cảnh báo Katakana nối bằng dấu '-' ASCII
-    if (/[ｦ-ﾟ]-|-[ｦ-ﾟ]/.test(result)) {
-        warnings.push("⚠️ Katakana đang nối bằng '-' (có thể thiếu 'ー' hoặc dùng sai dấu)");
+    // RULE 3: ASCII '-' dùng trong tiếng Nhật
+    if (/[ｦ-ﾟ一-龯]-|-[ｦ-ﾟ一-龯]/.test(result)) {
+        warnings.push("🚫 [DRAWING] Dùng '-' ASCII trong text tiếng Nhật");
     }
 
-    // Hiển thị cảnh báo
+    // RULE 4: Trộn hệ ký tự trong 1 token
+    const tokens = result.split(/\s+/);
+    tokens.forEach(t => {
+        let types = 0;
+        if (/[A-Za-z]/.test(t)) types++;
+        if (/[ｦ-ﾟ]/.test(t)) types++;
+        if (/[一-龯]/.test(t)) types++;
+
+        if (types >= 2) {
+            warnings.push(`🚫 [DRAWING] Trộn nhiều hệ ký tự trong token: "${t}"`);
+        }
+    });
+
+    // RULE 5: Katakana có thể thiếu 'ー'
+    if (/[ｱｲｳｴｵｶｻﾀﾅﾊﾏﾔﾗﾜ](?![ｰー])/.test(result)) {
+        warnings.push("⚠️ [JP] Katakana có thể đang thiếu dấu kéo dài 'ー'");
+    }
+
+    // RULE 6: Trộn số full-width & half-width
+    if (/[0-9].*[０-９]|[０-９].*[0-9]/.test(result)) {
+        warnings.push("⚠️ [DRAWING] Trộn số full-width và half-width");
+    }
+
+    // Hiển thị
     if (warnings.length > 0) {
         warningMsg.innerHTML = warnings.join("<br>");
         warningMsg.style.display = "block";
@@ -143,6 +165,7 @@
         warningMsg.style.display = "none";
     }
 });
+        
         function clearText() {
             input.value = "";
             output.value = "";
