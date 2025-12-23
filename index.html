@@ -128,9 +128,9 @@
         warnings.push("🚫 [DRAWING] 'ｰ' không được dùng làm dấu nối trong mã kỹ thuật");
     }
 
-    // RULE C: ASCII '-' dùng trong text tiếng Nhật
-    if (/[ｦ-ﾟ一-龯]-|-[ｦ-ﾟ一-龯]/.test(result)) {
-        warnings.push("🚫 [DRAWING] Dùng '-' ASCII trong text tiếng Nhật");
+    // RULE C (ĐÃ GIỚI HẠN): '-' chỉ sai khi nối chữ Nhật – chữ Nhật
+    if (/[ｦ-ﾟ一-龯]-[ｦ-ﾟ一-龯]/.test(result)) {
+        warnings.push("🚫 [DRAWING] '-' đang được dùng để nối từ tiếng Nhật (không phù hợp)");
     }
 
     // Hiển thị cảnh báo
