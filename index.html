@@ -132,28 +132,11 @@
     if (/[ｦ-ﾟ一-龯]-|-[ｦ-ﾟ一-龯]/.test(result)) {
         warnings.push("🚫 [DRAWING] Dùng '-' ASCII trong text tiếng Nhật");
     }
-
-    // RULE 4: Trộn hệ ký tự trong 1 token
-    const tokens = result.split(/\s+/);
-    tokens.forEach(t => {
-        let types = 0;
-        if (/[A-Za-z]/.test(t)) types++;
-        if (/[ｦ-ﾟ]/.test(t)) types++;
-        if (/[一-龯]/.test(t)) types++;
-
-        if (types >= 2) {
-            warnings.push(`🚫 [DRAWING] Trộn nhiều hệ ký tự trong token: "${t}"`);
-        }
     });
 
     // RULE 5: Katakana có thể thiếu 'ー'
     if (/[ｱｲｳｴｵｶｻﾀﾅﾊﾏﾔﾗﾜ](?![ｰー])/.test(result)) {
         warnings.push("⚠️ [JP] Katakana có thể đang thiếu dấu kéo dài 'ー'");
-    }
-
-    // RULE 6: Trộn số full-width & half-width
-    if (/[0-9].*[０-９]|[０-９].*[0-9]/.test(result)) {
-        warnings.push("⚠️ [DRAWING] Trộn số full-width và half-width");
     }
 
     // Hiển thị
