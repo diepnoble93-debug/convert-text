@@ -127,6 +127,22 @@
                 warningMsg.textContent = "";
                 warningMsg.style.display = "none";
             }
+            // Cảnh báo dùng 'ｰ' sai (giữa chữ/số)
+    if (/[A-Za-z0-9]ｰ|ｰ[A-Za-z0-9]/.test(result)) {
+        warnings.push("⚠️ Phát hiện 'ｰ' đang dùng như dấu nối (có thể dùng sai ngữ nghĩa)");
+    }
+
+    // Cảnh báo Katakana + dấu '-'
+    if (/[ｦ-ﾟ]-|-[ｦ-ﾟ]/.test(result)) {
+        warnings.push("⚠️ Katakana đang nối bằng '-' (có thể thiếu 'ー' hoặc dùng sai dấu)");
+    }
+
+    if (warnings.length > 0) {
+        warningMsg.innerHTML = warnings.join("<br>");
+        warningMsg.style.display = "block";
+    } else {
+        warningMsg.textContent = "";
+        warningMsg.style.display = "none";}
         });
 
         function clearText() {
